@@ -1,8 +1,8 @@
 from django.urls import reverse
 from rest_framework.test import APITestCase
 from rest_framework import status
-from users.models import User
-
+from users.models import User, UserChr
+import random
 
 class UserCreateViewTestCase(APITestCase):
     def test_registration(self):
@@ -30,8 +30,6 @@ class UserAuthViewTestCase(APITestCase):
         #         username=f'john{user_id}', password=f'password1!{user_id}'
         #     )
         
-    
-        
     def test_login(self):
         url = reverse("user_auth_view")
         response = self.client.post(url, self.user_data)
@@ -40,5 +38,58 @@ class UserAuthViewTestCase(APITestCase):
     def test_get_user_data(self):
         access_token = self.client.post(reverse('user_auth_view'), self.user_data).data['access']
         response = self.client.get(path=reverse("user_auth_view"), HTTP_AUTHORIZATION=f"Bearer {access_token}")
-        print(response.data)
         self.assertEqual(response.status_code, 200)
+
+class UserSignOutViewTestCase(APITestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.user_data = {'username':'john', 'password':'password1!'}
+        cls.user = User.objects.create_user('john', 'password1!')
+    
+    def test_login(self):
+        url = reverse("user_auth_view")
+        response = self.client.post(url, self.user_data)
+        self.assertEqual(response.status_code, 200)
+    
+    def test_signout(self):
+        url = reverse("user_signout_view")
+        response = self.client.post(url, self.user_data)
+        self.assertEqual(response.status_code, 204)
+
+class UserChrViewTestCase(APITestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.user_data = {'username':'john', 'password':'password1!'}
+        cls.user = User.objects.create_user('john', 'password1!')
+    
+    def setUp(self):
+        self.access_token = self.client.post(reverse('user_auth_view'), self.user_data).data['access']
+
+    def test_userchr_post(self):
+        self.user_id = 1
+        url = reverse("user_chr_view", args=[self.user_id])
+        mbti_list = ['ENFP', 'ENFJ', 'ENTP', 'ENTJ', 'ESFP', 'ESFJ', 'ESTP', 'ESTJ', 'INFP', 'INFJ', 'INTP', 'INTJ', 'ISFP', 'ISFJ', 'ISTP', 'ISTJ']
+        response = self.client.post(
+            path = url, 
+            data = {
+                'user_id' : 1,
+                'mbti' : random.choice(mbti_list),
+                'gender' : random.choice(['W', 'M']),
+                'age' : random.randrange(10, 80)
+            },
+            HTTP_AUTHORIZATON = f'Bearer {self.access_token}'
+            )
+            
+        self.assertEqual(response.status_code, 200)
+    
+    def test_userchr_get_no_content(self):
+        self.user_id = 1
+        url = reverse("user_chr_view", args=[self.user_id])
+        response = self.client.get(
+            path = url,
+            
+        )
+        self.assertEqual(response.status_code, 204)
+
+
+
