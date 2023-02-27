@@ -1,5 +1,9 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
+
+from django.db.models import Q, F
+from django.db.models.aggregates import Count
+
 from rest_framework import status
 from rest_framework.authentication import BasicAuthentication
 from rest_framework.permissions import IsAuthenticated
@@ -214,9 +218,16 @@ class AllBeeSolutionView(APIView):
     # permission_classes = [IsAuthenticated]
     
     def get(self, request):
-        bee_solution = Solution.objects.all().order_by('-pk')
-        bee_solution_serializer = BeeSolutionSerializer(bee_solution, many = True)
-        return Response(bee_solution_serializer.data, status=status.HTTP_200_OK)
+       
+        bee_solution = Solution.objects.prefetch_related('category').all()
+        
+        data = list(bee_solution.values())
+        
+        return Response(data, status=status.HTTP_200_OK)
+
+        # bee_solution = Solution.objects.all().order_by('-pk')
+        # bee_solution_serializer = BeeSolutionSerializer(bee_solution, many = True)
+        # return Response(bee_solution_serializer.data, status=status.HTTP_200_OK)
 
 
 class MyBeeSolutionView(APIView):

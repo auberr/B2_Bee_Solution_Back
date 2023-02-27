@@ -45,6 +45,7 @@ class UserSignOutViewTestCase(APITestCase):
     def setUpTestData(cls):
         cls.user_data = {'username':'john', 'password':'password1!'}
         cls.user = User.objects.create_user('john', 'password1!')
+        
     
     def test_login(self):
         url = reverse("user_auth_view")
@@ -59,7 +60,7 @@ class UserSignOutViewTestCase(APITestCase):
 class UserChrViewTestCase(APITestCase):
     @classmethod
     def setUpTestData(cls):
-        cls.user_data = {'username':'john', 'password':'password1!', 'user_chr_check':True}
+        cls.user_data = {'username':'john', 'password':'password1!'}
         cls.user = User.objects.create_user('john', 'password1!')
         
     
@@ -68,17 +69,18 @@ class UserChrViewTestCase(APITestCase):
 
     def test_userchr_get_no_content(self):
         self.user_id = 1
+        self.user = User.objects.get(id=1)
+        self.user.user_chr_check = False
+        print(self.user.user_chr_check)
+        print(2345)
         url = reverse("user_chr_view", args=[self.user_id])
-        user = User.objects.get(id=1)
-        print(user)
-        user_check = user.user_chr_check
-        print(user_check)
         response = self.client.get(
             path = url,
-            # data = {
-            #     'user.user_chr_check' : user_check
-            # }
+            data = {'user' : self.user,
+                },
+            HTTP_AUTHORIZATON = f'Bearer {self.access_token}'
         )
+        print(response.data)
         self.assertEqual(response.status_code, 204)
 
 
